@@ -21,17 +21,10 @@ impl<R: Read> Reader<R> {
     }
 
     fn read_to_array<const LEN: usize>(&mut self, buf: &mut [u8; LEN]) -> ReadResult<()> {
-        match self.inner.read(buf) {
-            Ok(n) => {
-                self.position += n;
-
-                if n == LEN {
-                    Ok(())
-                } else {
-                    Err(self.to_error(ReadErrorKind::Incomplete(Needed::Size(
-                        NonZeroUsize::new(LEN - n).expect("n is guaranteed to not equal LEN"),
-                    ))))
-                }
+        match self.inner.read_exact(buf) {
+            Ok(()) => {
+                self.position += LEN;
+                Ok(())
             }
             Err(e) => match e.kind() {
                 // this I/O error is non-fatal, so reading is retried
@@ -45,19 +38,11 @@ impl<R: Read> Reader<R> {
     }
 
     fn read_to_slice(&mut self, buf: &mut [u8]) -> ReadResult<()> {
-        match self.inner.read(buf) {
-            Ok(n) => {
-                self.position += n;
+        match self.inner.read_exact(buf) {
+            Ok(()) => {
                 let buf_len = buf.len();
-
-                if n == buf_len {
-                    Ok(())
-                } else {
-                    Err(self.to_error(ReadErrorKind::Incomplete(Needed::Size(
-                        NonZeroUsize::new(buf_len - n)
-                            .expect("n is guaranteed to not equal buf_len"),
-                    ))))
-                }
+                self.position += buf_len;
+                Ok(())
             }
             Err(e) => match e.kind() {
                 // this I/O error is non-fatal, so reading is retried
