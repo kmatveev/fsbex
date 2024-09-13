@@ -41,7 +41,7 @@ pub(super) fn encode<R: Read, W: Write>(
     let stream_size = info.size.get() as usize;
     let mut window = PreviousWindowRight::new();
 
-    while source.position() - start_pos < stream_size {
+    while source.position() - start_pos < (stream_size - 1){
         let packet_size = source
             .le_u16()
             .map_err(VorbisError::from_read(VorbisErrorKind::ReadPacket))?;
